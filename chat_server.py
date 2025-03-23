@@ -8,7 +8,7 @@ from typing import List, Tuple
 
 # local host
 HOST: str = '127.0.0.1'
-PORT: int = 5000
+PORT: int = 5050
 
 clients: List[socket.socket] = []
 
