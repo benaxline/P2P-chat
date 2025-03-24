@@ -4,7 +4,7 @@ import time
 import socket
 from idlelib.squeezer import count_lines_with_wrapping
 
-from chat_server import start_server, HOST, PORT, clients
+from chat_server import start_server, HOST, PORT, stop_server_event
 
 class TestChatIntegration(unittest.TestCase):
     @classmethod
@@ -12,6 +12,7 @@ class TestChatIntegration(unittest.TestCase):
         """
         starts the server once
         """
+        stop_server_event.clear()
         cls.server_thread = threading.Thread(target=start_server, daemon=True)
         cls.server_thread.start()
         time.sleep(1)
@@ -21,10 +22,9 @@ class TestChatIntegration(unittest.TestCase):
         """
         Close connected client sockets and stop server
         """
-        for c in clients:
-            c.close()
+        stop_server_event.set()
+        cls.server_thread.join(timeout=3)
 
-        time.sleep(1)
 
     def test_single_client_connects_and_sends_essage(self):
         """
