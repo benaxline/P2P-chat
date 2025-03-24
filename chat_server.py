@@ -45,8 +45,10 @@ def handle_client(client_socket: socket.socket, address: Tuple[str, int]) -> Non
         data = client_socket.recv(1024)
         if not data:
             break
-
         broadcast_message(data, client_socket)
+    if client_socket in clients:
+        clients.remove(client_socket)
+    client_socket.close()
 
 
 def start_server() -> None:
@@ -78,6 +80,7 @@ def start_server() -> None:
                 continue
 
             clients.append(client_socket)
+            send_history(client_socket)
 
             # create a new thread
             thread = threading.Thread(target=handle_client, args=(client_socket, address))
@@ -93,6 +96,25 @@ def start_server() -> None:
         if db_conn:
             db_conn.close()
         print('[!] Server shutdown complete.')
+
+def send_history(client_socket: socket.socket) -> None:
+    """
+    loads old messages from database
+    sends them to client
+
+    :param client_socket: client socket
+    :return: None
+    """
+    messages = load_messages(db_conn)
+    for message in messages:
+        # Assuming msg tuple is (id, sender, timestamp, message)
+        formatted = f"[{message[2]}] {message[1]}: {message[3]}"
+        try:
+            client_socket.sendall(formatted.encode('utf-8'))
+            # Send a newline after each message for readability
+            client_socket.sendall("\n".encode('utf-8'))
+        except Exception as e:
+            print(f"Error sending history to client: {e}")
 
 if __name__ == "__main__":
     start_server()
