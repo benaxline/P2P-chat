@@ -1,6 +1,8 @@
 import socket
 import threading
+from sqlite3 import Connection
 from typing import List, Tuple
+from database import store_message, init_db, load_messages
 
 # local host
 HOST: str = '127.0.0.1'
@@ -10,6 +12,9 @@ stop_server_event = threading.Event()
 clients: List[socket.socket] = []
 
 client_threads: List[threading.Thread] = []
+
+# database
+db_conn: Connection = None
 
 def broadcast_message(message: bytes, source_socket: socket.socket) -> None:
     """
@@ -36,21 +41,22 @@ def handle_client(client_socket: socket.socket, address: Tuple[str, int]) -> Non
     :param address: contains the client IP and port
     :return: None
     """
-
-    print(f'[+] New connection... Address: {address}')
+    sender_str = f"{address[0]}:{address[1]}"
+    print(f'[+] New connection... Address: {sender_str}')
     while True:
         try:
             message: bytes = client_socket.recv(1024)
             if not message:
                 # disconnected
-                print(f'[-] Client disconnected: {address}')
+                print(f'[-] Client disconnected: {sender_str}')
                 break
+            store_message(db_conn, sender_str, message)
             broadcast_message(message, client_socket)
         except ConnectionResetError:
-            print(f'[-] Client {address} closed connection.')
+            print(f'[-] Client {sender_str} closed connection.')
             break
         except Exception as e:
-            print(f'[!] Error handling client {address}: {e}')
+            print(f'[!] Error handling client {sender_str}: {e}')
             break
 
     if client_socket in clients:
@@ -64,6 +70,14 @@ def start_server() -> None:
 
     :return: None
     """
+    global db_conn
+    db_conn = init_db()
+    print('[DB] Database intialized and table ready.')
+    prev_messages = load_messages(db_conn)
+    print('[DB] Loaded previous messages.')
+    for msg in prev_messages:
+        print(msg)
+
     server_socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server_socket.bind((HOST, PORT))
@@ -87,10 +101,13 @@ def start_server() -> None:
     except KeyboardInterrupt:
         print(f'\n[!] Server shutting down.')
     finally:
+        print('[!] Stopping server...')
         server_socket.close()
         for t in client_threads:
             t.join()
-        print(f'[!] Server shutdown complete.')
+        if db_conn:
+            db_conn.close()
+        print('[!] Server shutdown complete.')
 
 if __name__ == "__main__":
     start_server()
