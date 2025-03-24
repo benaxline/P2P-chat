@@ -2,8 +2,7 @@ import socket
 import threading
 from sqlite3 import Connection
 from typing import List, Tuple
-
-from database import store_message, init_db
+from database import store_message, init_db, load_messages
 
 # local host
 HOST: str = '127.0.0.1'
@@ -74,6 +73,10 @@ def start_server() -> None:
     global db_conn
     db_conn = init_db()
     print('[DB] Database initialized and table ready.')
+    prev_messages = load_messages(conn=db_conn)
+    print('[DB] Loaded past messages from database.')
+    for message in prev_messages:
+        print(message[-1])
 
     server_socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
