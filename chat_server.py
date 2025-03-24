@@ -42,10 +42,26 @@ def handle_client(client_socket: socket.socket, address: Tuple[str, int]) -> Non
     :return: None
     """
     while True:
-        data = client_socket.recv(1024)
-        if not data:
+        try:
+            data = client_socket.recv(1024)
+            if not data:
+                break
+
+            message_str = data.decode('utf-8')
+
+            if ": " in message_str:
+                nickname, actual_message = message_str.split(": ", 1)
+            else:
+                nickname = "Unknown"
+                actual_message = message_str
+
+            # Save to database
+            store_message(db_conn, nickname, actual_message.encode('utf-8'))
+            broadcast_message(data, client_socket)
+        except Exception as e:
+            print(f"[!] Error in handle_client: {e}")
             break
-        broadcast_message(data, client_socket)
+
     if client_socket in clients:
         clients.remove(client_socket)
     client_socket.close()
