@@ -1,9 +1,5 @@
 import socket
-import select
-import sys
 import threading
-from _thread import *
-from math import expm1
 from typing import List, Tuple
 
 # local host
@@ -31,7 +27,7 @@ def broadcast_message(message: bytes, source_socket: socket.socket) -> None:
 
 def handle_client(client_socket: socket.socket, address: Tuple[str, int]) -> None:
     """
-    Hnadles communication with a single client
+    Handles communication with a single client
 
     :param client_socket: the socket of the client
     :param address: contains the client IP and port
