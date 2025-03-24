@@ -41,27 +41,12 @@ def handle_client(client_socket: socket.socket, address: Tuple[str, int]) -> Non
     :param address: contains the client IP and port
     :return: None
     """
-    sender_str = f"{address[0]}:{address[1]}"
-    print(f'[+] New connection... Address: {sender_str}')
     while True:
-        try:
-            message: bytes = client_socket.recv(1024)
-            if not message:
-                # disconnected
-                print(f'[-] Client disconnected: {sender_str}')
-                break
-            store_message(db_conn, sender_str, message)
-            broadcast_message(message, client_socket)
-        except ConnectionResetError:
-            print(f'[-] Client {sender_str} closed connection.')
-            break
-        except Exception as e:
-            print(f'[!] Error handling client {sender_str}: {e}')
+        data = client_socket.recv(1024)
+        if not data:
             break
 
-    if client_socket in clients:
-        clients.remove(client_socket)
-    client_socket.close()
+        broadcast_message(data, client_socket)
 
 
 def start_server() -> None:
