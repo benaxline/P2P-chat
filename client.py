@@ -1,6 +1,5 @@
 import socket
 import threading
-from typing import Tuple
 
 HOST: str = '127.0.0.1'
 PORT: int = 5050
@@ -40,17 +39,21 @@ def start_client() -> None:
         print(f'[!] Unable to connect to server: {e}')
         return
 
+    nickname = input("Enter your nickname: ")
+
     thread = threading.Thread(target=receive_messages, args=(client_socket,))
     thread.start()
 
     while True:
-        message: str = input()
+        message: str = input(f"{nickname}: ")
         if message.lower() == "/quit":
             print('[!] Quitting chat...')
             client_socket.close()
             break
+        formatted_message = f'{nickname}: {message}'
+
         try:
-            client_socket.sendall(message.encode('utf-8'))
+            client_socket.sendall(formatted_message.encode('utf-8'))
         except Exception as e:
             print(f'[!] Error sending message: {e}')
             client_socket.close()

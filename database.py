@@ -22,7 +22,7 @@ def init_db(db_path: str = "chat_messages.db") -> Connection:
     return conn
 
 
-def store_message(conn: Connection, sender: str, message: bytes) -> None:
+def store_message(conn: Connection, nickname: str, message: bytes) -> None:
     """
     Stores a message into the database with sender information and a timestamp.
     """
@@ -30,7 +30,7 @@ def store_message(conn: Connection, sender: str, message: bytes) -> None:
     message_text = message.decode('utf-8')
     cursor = conn.cursor()
     cursor.execute("INSERT INTO messages (sender, timestamp, message) VALUES (?, ?, ?)",
-                   (sender, timestamp, message_text))
+                   (nickname, timestamp, message_text))
     conn.commit()
 
 
