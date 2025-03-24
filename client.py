@@ -19,7 +19,8 @@ def receive_messages(client_socket:socket.socket) -> None:
                 print(f'[!] Connection closed by server.')
                 client_socket.close()
                 break
-            print(message.decode('utf-8'))
+            decoded_message = message.decode('utf-8')
+            print(f'{decoded_message}')
         except Exception as e:
             print(f'[!] Error receiving message: {e}')
             client_socket.close()
@@ -44,6 +45,8 @@ def start_client() -> None:
     thread.start()
 
     while True:
+        sender_str = f"{client_socket}:{address}"
+        print(f'{sender_str}')
         message: str = input()
         if message.lower() == "/quit":
             print('[!] Quitting chat...')
