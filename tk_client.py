@@ -3,13 +3,14 @@ import threading
 import tkinter as tk
 
 class ChatClient(tk.Frame):
-    def __init__(self, master, host, port):
+    def __init__(self, master, host, port, nickname):
         super().__init__(master)
         self.master = master
         self.host = host
         self.port = port
         self.create_widgets()
         self.socket = None
+        self.nickname = nickname
 
     def create_widgets(self):
         self.text_area = tk.Text(self, wrap='word', state='disabled')
@@ -28,10 +29,15 @@ class ChatClient(tk.Frame):
 
     def receive_messages(self):
         while True:
-            data = self.socket.recv(1024)
-            if not data:
+            try:
+                data = self.socket.recv(1024)
+                if not data:
+                    self.display_message("[!] Connection closed by server.")
+                    break
+                self.display_message(data.decode('utf-8'))
+            except Exception as e:
+                self.display_message(f"[!] Error receiving message: {e}")
                 break
-            self.display_message(data.decode('utf-8'))
 
     def display_message(self, message):
         self.text_area.config(state='normal')
@@ -41,13 +47,23 @@ class ChatClient(tk.Frame):
 
     def send_message(self, event):
         message = self.entry.get()
+        if not message:
+            return
+        formatted_message = f'{self.nickname}: {message}'
+        self.display_message(formatted_message)
         self.entry.delete(0, tk.END)
-        self.socket.sendall(message.encode('utf-8'))
+        try:
+            self.socket.sendall(formatted_message.encode('utf-8'))
+        except Exception as e:
+            self.display_message(f'[!] Error sending message: {e}')
 
-
-if __name__ == "__main__":
+def main():
+    nickname = input("Enter your nickname: ")
     root = tk.Tk()
     root.title("Chat Client")
-    client = ChatClient(root, "127.0.0.1", 5050)
+    client = ChatClient(root, "127.0.0.1", 5050, nickname)
     client.connect_to_server()
     root.mainloop()
+
+if __name__ == "__main__":
+    main()

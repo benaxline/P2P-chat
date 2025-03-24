@@ -1,6 +1,5 @@
 import socket
 import threading
-from typing import Tuple
 
 HOST: str = '127.0.0.1'
 PORT: int = 5050
